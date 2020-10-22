@@ -1,0 +1,7 @@
+# Ignoring data files (.ind, .geno, .snp, .bam, .output, .read)
+
+*.output
+*.reads
+*.ind
+*.snp
+*.geno
