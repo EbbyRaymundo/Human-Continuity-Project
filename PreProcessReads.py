@@ -14,6 +14,7 @@
 #
 ########################################
 import subprocess as sp
+import pysam
 
 '''
 Uses string representing mpileup command to run subprocess and return
@@ -45,6 +46,9 @@ chrom | pos | anc1_der | anc1_anc | anc1_other | anc2_der | ...
 
 individuals: list of ancient individuals who have sorted and
              indexed bam files available
+snpFile: eigenstrat format snp file
+bamFilePath: directory path to the bam files. Make sure that
+             the path you give it is the FOLDER, not a file.
 '''
 
 def createAncientSampleReads(individuals, snpFile, bamFilePath):
@@ -67,19 +71,33 @@ def createAncientSampleReads(individuals, snpFile, bamFilePath):
 
         for i in range(len(individuals)): # run mpileup on each individual
 
-            # in format "samtools mpileup -r chromosome:pos bamFile"
-            mpileup = runSubprocess(f"samtools mpileup -r {lineList[1]}:{lineList[3]}-{lineList[3]} {bamFilePath}{individuals[i]}.sorted.bam")
+            # in format "samtools mpileup -r chromosome:pos-pos bamFile"
+            # Even if you only want one positon, do pos-pos. Otherwise
+            # You'll get reads from that position to the end of the
+            # chromosome.
+
+            if (lineList[1] == '23'): # if X chromosome
+                reads = pysam.mpileup('-r', f"X:{lineList[3]}-{lineList[3]}", f"{bamFilePath}{individuals[i]}.sorted.bam")
+                reads = reads.split()
+
+            elif(lineList[1] == '24'): # if Y chromosome
+                reads = pysam.mpileup('-r', f"Y:{lineList[3]}-{lineList[3]}", f"{bamFilePath}{individuals[i]}.sorted.bam")
+                reads = reads.split()
+
+            else:
+                reads = pysam.mpileup('-r', f"{lineList[1]}:{lineList[3]}-{lineList[3]}", f"{bamFilePath}{individuals[i]}.sorted.bam")
+                reads = reads.split()
             # list of strings ["chrom", "pos", "N", "total reads", "reads", "read quality"]
 
-            if (mpileup[0] == ''): # no read was found
+            if not reads: # no read was found
                 ancReads = 0
                 derReads = 0
                 otherReads = 0
 
             else:
-                totalReads = int(mpileup[3])
-                ancReads = mpileup[4].count(lineList[4])
-                derReads = mpileup[4].count(lineList[5])
+                totalReads = int(reads[3])
+                ancReads = reads[4].count(lineList[4])
+                derReads = reads[4].count(lineList[5])
                 otherReads = totalReads - ancReads - derReads
 
             writtenLine = f"{writtenLine}\t{derReads}\t{ancReads}\t{otherReads}" # append reads to line
