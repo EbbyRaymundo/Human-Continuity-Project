@@ -24,25 +24,30 @@ Reads fileName and adds line number (starting at 0) of specified population to a
 fileName: ind file in eigenstrat format
 group: search term. Uses .find() method. Is case sensitive.
 
-return: list of line numbers for searched individuals
+return: list of line numbers for searched individuals,
+        list of lines that matched search
+
 '''
 def readIndividuals(fileName, group):
 
     file = open(fileName, 'r')
     lineNumber = 0
     individuals = [] # list that will hold line #'s of search individuals (will act as indexor later)
+    lineList = [] # to keep track of what we're searching. Can serve as debug tool, but is actually
+                  # used in appendAncientIndividuals() function
 
     for line in file:
 
-        if (line.find(group) != -1): # search term is found in line
+        if group in line:
             individuals.append(lineNumber)  # add line # to list (will act as an index later)
+            lineList.append(line)
 
         # advance
         lineNumber += 1
 
     file.close() # for good practice
 
-    return(individuals)
+    return(individuals, lineList)
 
 '''
 Uses string representing terminal command to run subprocess and return
@@ -77,7 +82,7 @@ return: numpy array of freqs, # of lines in geno file (# SNP's), searched group 
 '''
 def computeAlleleFreq(genoFile, indFile, snpFile, group):
 
-    individualIndices = readIndividuals(indFile, group) # creates list of indices
+    individualIndices, searchedLines = readIndividuals(indFile, group) # creates list of indices
 
     # need to count number of lines in .geno file to construct
     # the numpy array with the correct size. Appending to the
@@ -140,38 +145,92 @@ def computeAlleleFreq(genoFile, indFile, snpFile, group):
 '''
 Appends the read data for an ancient individual to the
 1k genome population data whose allele frequencies
-have already been calculated.
+have already been calculated using computeAlleleFrequency().
+File name will be a compound of 1k genomes group and
+individuals using their bam file name. Also creates
+a corresponding .ind file for the newly made reads
+file (uses same naming convention).
+Ex: group_individual1_individual2.reads
+    group_individual1_individual2.ind
 
 group: 1k genomes group to append to
-individuals: List of names of ancient individuals. Name should 
-             match those in ind file of ancient samples.
+individuals: LIST of names of ancient individuals. Names should 
+             match those in header of ancientFile.
 ancientFile: Preprocessed ancient individual data (from running 
              PreProcessReads.py). Contains mpileup read counts 
              for each snp in snpFile.
+nameDict: Optional argument if your bam file names don't match
+          the ind file for your ancient individuals. This will
+          make the .reads header match your .ind file.
+          Note: The .reads and .ind file name isn't impacted.
+
+indFile: If you give a nameDict, you need to provide the
+                corresponding .ind file.
 '''
-def appendAncientIndividual(group, individuals, ancientFile):
+def appendAncientIndividual(group, individuals, ancientFile, nameDict = None, indFile = None):
+
+    # if we're given a nameDict, it's implied that the bamfile names
+    # don't match what's in the .ind file for the ancient individual
+    if (nameDict != None):
+        if (indFile == None):
+            print("You must provide a corresponding .ind file")
+            return()
+
+        newIndFile = group
+
+        for each in individuals:
+            newIndFile = f"{newIndFile}_{each}" # will finish as "group_ind1_ind2_..." for file name
+
+        newIndFile = open(f"{newIndFile}.ind", "w")
+
+        for each in individuals:
+            print(each)
+            print(nameDict[each])
+            print(individuals)
+            individualIndices, searchedLines = readIndividuals(indFile, nameDict[each])
+            fixedLine = searchedLines[0].replace('_', '') # need to remove underscores
+            newIndFile.write(fixedLine) # searchedLines should only contain 1 value
+
+        newIndFile.close()
 
     # contains header "Chrom | Pos | anc1_der | anc1_anc | anc1_other | anc2_der | ..."
     aFile = open(ancientFile, 'r')
     aFileLine = aFile.readline().split() # sitting on first line, is now in tokens
     indList = [] # for keeping track of where individuals we want are in aFileLine list
 
-    for i in range(len(individuals)):
-        indList.append(aFileLine.index(f"{individuals[i]}_der")) # adds first index of ancient individual
+    for each in individuals:
+        indList.append(aFileLine.index(f"{each}_der")) # adds first index of ancient individual
 
     groupFile = open(f"{group}.output", 'r') # opens 1k genome source file
     outFile = group
 
-    for i in range(len(individuals)):
-        outFile = f"{outFile}_{individuals[i]}" # will finish as "group_ind1_ind2_..." for file name
+    for each in individuals:
+        outFile = f"{outFile}_{each}" # will finish as "group_ind1_ind2_..." for file name
 
     outFile = open(f"{outFile}.reads", "w")
 
     header = groupFile.readline() # won't start on header line in main loop
     header = header.strip()
 
-    for i in range(len(indList)):
-        header = f"{header}\t{aFileLine[indList[i]]}\t{aFileLine[indList[i] + 1]}\t{aFileLine[indList[i] + 2]}" # adds anci_der anci_anc anci_other
+    if (nameDict != None): # need to base header off dictionary and remove '_'
+
+        fixedDict = {} # making a new dictionary keeps the argument intact
+
+        for key in nameDict:
+            fixedDict[key] = nameDict[key].replace('_', '')
+
+        for i in range(len(indList)):
+            # adds anci_der anci_anc anci_other
+            # aFileLine[indList[i]] contains "individual_der".
+            # Here we replace "individual" with name in the
+            # dictionary but keep the "_der"
+            header = f"{header}\t{aFileLine[indList[i]].replace(individuals[i], fixedDict[individuals[i]])}\t{aFileLine[indList[i] + 1].replace(individuals[i], fixedDict[individuals[i]])}\t{aFileLine[indList[i] + 2].replace(individuals[i], fixedDict[individuals[i]])}"
+
+    else:
+
+        for i in range(len(indList)):
+            # adds anci_der anci_anc anci_other
+            header = f"{header}\t{aFileLine[indList[i]]}\t{aFileLine[indList[i] + 1]}\t{aFileLine[indList[i] + 2]}" # adds anci_der anci_anc anci_other
 
     outFile.write(f"{header}\n")
 
@@ -230,11 +289,51 @@ computeAlleleFreq(testGenoFile, testIndFile, testSNPFile, searchTerm, reads)
 IndFile = "v42.4.1240K.EG.ind"
 GenoFile = "v42.4.1240K.EG.geno"
 SNPFile = "v42.4.1240K.EG.snp"
-searchTerm = "ASW"
+#searchTerm = "CHB"
 reads = "AncientReads.output"
 
 #searchTerms = ["ACB", "ASW","BEB", "GBR", "CDX", "CLM", "ESN", "FIN", "GWD", "GIH", "CHB", "CHS", "IBS", "ITU", "JPT", "KHV", "LWK", "MSL", "MXL", "PEL", "PUR", "PJL", "STU", "TSI", "YRI", "CEU"]
-#computeAlleleFreq(GenoFile, IndFile, SNPFile, searchTerm)
-print(appendAncientIndividual("ASW", ["HRR051935", "HRR051936"], "AncientReads.output"))
-#for i in range(len(searchTerms)):
-#    computeAlleleFreq(GenoFile, IndFile, SNPFile, searchTerms[i])
+searchTerms = ["CHB", "CHS", "CDX", "JPT"]
+
+#for group in searchTerms:
+#    computeAlleleFreq(GenoFile, IndFile, SNPFile, group)
+
+ancientIndividuals = ["HRR051935", "HRR051936", "HRR051937",\
+                      "HRR051938", "HRR051939", "HRR051940",\
+                      "HRR051941", "HRR051942", "HRR051943",\
+                      "HRR051944", "HRR051945", "HRR051946",\
+                      "HRR051947", "HRR051948", "HRR051949",\
+                      "HRR051950", "HRR051951", "HRR051952",\
+                      "HRR051954", "HRR051955",\
+                      "HRR051956", "HRR051958",\
+                      "HRR051959", "HRR051960"]
+
+ancientDict = {"HRR051935":"Yumin",\
+               "HRR051936":"Bianbian",\
+               "HRR051937":"BS",\
+               "HRR051938":"XJS1309_M7",\
+               "HRR051939":"XJS1311_M16",\
+               "HRR051940":"XJS1309_M4",\
+               "HRR051941":"Xiaogao",\
+               "HRR051942":"Qihe2_d",\
+               "HRR051943":"LD1",\
+               "HRR051944":"LD2",\
+               "HRR051945":"SuogangB1_d",\
+               "HRR051946":"SuogangB3_d",\
+               "HRR051947":"L5705",\
+               "HRR051948":"L5700",\
+               "HRR051949":"L5692_d",\
+               "HRR051950":"L5706_d",\
+               "HRR051951":"L5704_d",\
+               "HRR051952":"L5703_d",\
+               "HRR051954":"L5701_d",\
+               "HRR051955":"L7415",\
+               "HRR051956":"L7417_d",\
+               "HRR051958":"L5698_d",\
+               "HRR051959":"L5696_d",\
+               "HRR051960":"L5694"}
+
+# removed HRR051957 and HRR051953 for not having a corresponding name in the ind file
+for group in searchTerms:
+    for individual in ancientIndividuals:
+        appendAncientIndividual(group, [individual], "AncientReads.output", ancientDict, "early_CN.ind")
