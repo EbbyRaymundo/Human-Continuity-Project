@@ -51,7 +51,7 @@ bamFilePath: directory path to the bam files. Make sure that
              the path you give it is the FOLDER, not a file.
 '''
 
-def createAncientSampleReads(individuals, snpFile, bamFilePath):
+def createAncientReads(individuals, snpFile, bamFilePath):
 
     sFile = open(snpFile, 'r')
     outFile = open("AncientReads.output", 'w') # will OVERWRITE contents of existing file
@@ -131,4 +131,4 @@ ancientIndividuals = ["HRR051935", "HRR051936", "HRR051937",\
 
 bamFiles = "/home/classes/myanglab/data/earlyCN/"
 
-createAncientSampleReads(ancientIndividuals, snpFile, bamFiles)
+createAncientReads(ancientIndividuals, snpFile, bamFiles)

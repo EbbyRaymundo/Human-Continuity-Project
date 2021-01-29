@@ -2,7 +2,7 @@ import ancient_genotypes as a_g
 import scipy.stats
 import numpy as np
 
-modern_pops = ["CHB", "CHS", "CDX", "JPT"]
+modern_pops = ["CHB", "CHS", "CDX", "JPT", "KHV", "CEU"]
 
 ancient_Individuals = ["HRR051935", "HRR051936", "HRR051937",\
                       "HRR051938", "HRR051939", "HRR051940",\
@@ -13,6 +13,10 @@ ancient_Individuals = ["HRR051935", "HRR051936", "HRR051937",\
                       "HRR051954", "HRR051955", "HRR051956",\
                       "HRR051958", "HRR051959", "HRR051960"]
 
+'''
+modern_pops = ["KHV", "CEU"]
+ancient_Individuals = ["HRR051935"]
+'''
 for group in modern_pops:
     for individual in ancient_Individuals:
 
@@ -21,7 +25,9 @@ for group in modern_pops:
 
         # estimating parameters
         opts_cont_false = a_g.optimize_pop_params_error_parallel(freqs,read_lists,48,continuity=False) #will only use one core; you can change the 1 to however many cores you want to use
+        print(opts_cont_false)
         opts_cont_true = a_g.optimize_pop_params_error_parallel(freqs,read_lists,48,continuity=True)
+        print(opts_cont_true)
         likelihood_false = np.array([-x[1] for x in opts_cont_false]) #minus sign is because scipy.optimize minimizes the negative log likelihood
         likelihood_true = np.array([-x[1] for x in opts_cont_true])
         LRT = 2*(likelihood_false - likelihood_true)
@@ -29,6 +35,20 @@ for group in modern_pops:
 
         print("1k genomes group: " + group)
         print("Ancient Individual: " + individual)
+        print("t1 continuity false:")
+        print(opts_cont_false[0][0])
+        print("t2 continuity false: ")
+        print(opts_cont_false[0][1])
+        print("continuity false error: ")
+        for error in opts_cont_false[2:]:
+            print(error)
+        print("t1 continuity true: ")
+        print( opts_cont_true[0][0])
+        print("t2 continuity true:")
+        print("0")
+        print("continuity true error: ")
+        for error in opts_cont_true[1:]:
+            print(error)
         print("LRT: ")
         print(LRT)
         print("P values: ")

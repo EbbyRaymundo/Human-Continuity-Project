@@ -24,7 +24,7 @@ def createCSV(fileName):
     file = open(fileName, 'r')
     fileName = fileName.strip(".results")
     newFile = open(f"{fileName}.csv", 'w')
-    newFile.write("population,individual,LRT,p\n") # creates header
+    newFile.write("population,individual,continuity_false_t1,continuity_false_t2,continuity_true_t1,continuity_true_t2,LRT,p\n") # creates header
 
     for line in file:
 
@@ -32,13 +32,34 @@ def createCSV(fileName):
             continue
         
         line = line.split() # "1k", "genomes", "group:" "population"
-        row  = line[3]
+        row  = line[3] # population
 
         line = file.readline()
         line = line.split() # "Ancient", "Individual:" "individual"
-        row  = f"{row},{line[2]}"
+        row  = f"{row},{line[2]}" # individual
 
         line = file.readline()
+        line = file.readline()
+        line = line.strip("\n[]") # continuity false
+        line = line.split() # "t1" "t2" "error_ind1" "error_ind2" "error_ind3"...
+        row  = f"{row},{line[0]}" # t1 continuity false
+        row  = f"{row},{line[1]}" # t2 continuity false
+        line = file.readline()
+
+        while(not line.startswith("t1")):
+            line = file.readline()
+
+        line = file.readline()
+        line = line.strip("\n[]") # t1 continuity true
+        line = line.split() # "t1" "error_ind1" "error_ind2" "error_ind3"...
+        row  = f"{row},{line[0]}"
+
+        row  = f"{row},0" # t2 continuity true
+        line = file.readline()
+
+        while(not line.startswith("LRT")):
+            line = file.readline()
+
         line = file.readline()
         line = line.strip("\n[]") # "LRT"
         row  = f"{row},{line}"

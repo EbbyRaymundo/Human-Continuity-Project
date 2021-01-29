@@ -153,19 +153,27 @@ file (uses same naming convention).
 Ex: group_individual1_individual2.reads
     group_individual1_individual2.ind
 
+INPUTS
 group: 1k genomes group to append to
 individuals: LIST of names of ancient individuals. Names should 
              match those in header of ancientFile.
 ancientFile: Preprocessed ancient individual data (from running 
              PreProcessReads.py). Contains mpileup read counts 
              for each snp in snpFile.
-nameDict: Optional argument if your bam file names don't match
-          the ind file for your ancient individuals. This will
+nameDict: Optional argument if your .bam file names don't match
+          the .ind file for your ancient individuals. This will
           make the .reads header match your .ind file.
           Note: The .reads and .ind file name isn't impacted.
-
 indFile: If you give a nameDict, you need to provide the
                 corresponding .ind file.
+
+OUTPUTS
+.reads (outFile): has header group_ind1_ind2_... and contains
+                  derived allele frequencies and read counts
+                  of the snp from bam files
+.ind (newIndFile): .ind file of desired alternative names for
+                   individuals of the .bam files. Underscores
+                   are removed from names within the file.
 '''
 def appendAncientIndividual(group, individuals, ancientFile, nameDict = None, indFile = None):
 
@@ -293,10 +301,10 @@ SNPFile = "v42.4.1240K.EG.snp"
 reads = "AncientReads.output"
 
 #searchTerms = ["ACB", "ASW","BEB", "GBR", "CDX", "CLM", "ESN", "FIN", "GWD", "GIH", "CHB", "CHS", "IBS", "ITU", "JPT", "KHV", "LWK", "MSL", "MXL", "PEL", "PUR", "PJL", "STU", "TSI", "YRI", "CEU"]
-searchTerms = ["CHB", "CHS", "CDX", "JPT"]
-
-#for group in searchTerms:
-#    computeAlleleFreq(GenoFile, IndFile, SNPFile, group)
+#searchTerms = ["CHB", "CHS", "CDX", "JPT"]
+searchTerms = ["KHV", "CEU"]
+for group in searchTerms:
+    computeAlleleFreq(GenoFile, IndFile, SNPFile, group)
 
 ancientIndividuals = ["HRR051935", "HRR051936", "HRR051937",\
                       "HRR051938", "HRR051939", "HRR051940",\
