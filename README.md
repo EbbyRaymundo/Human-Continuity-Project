@@ -13,7 +13,8 @@
     - Use computeAlleleFrequency() with modern populations you want to select out of your .ind file
     - Use appendAncientIndividuals() to add a column for each ancient individual's reads from the AncientReads.output file
     - **If** the names of your bam files do not match those of your ind file, you can use a python dictionary in appendAncientIndividuals() with the bam file name (omitting the file extension) **first** and their name in the ind file **second**.
-3. Run Schraiber's software. Here is a typical use example but read his documentation [Schraiber Github documentation](https://github.com/Schraiber/continuity/blob/master/README.md).
+3. Run Schraiber's software. Here is a typical use example but the [Schraiber Github documentation](https://github.com/Schraiber/continuity/blob/master/README.md).
+    - Output of this file is made using print statements (sorry, this was my best method for exporting the results). Edit this how you'd like.
 ```
 # reading in data
 unique_pops, inds, label, pops, freqs, read_lists = a_g.parse_reads_by_pop("reads/" + group + '_' + individual +".reads", "ind/" + group+ '_' + individual + ".ind")
@@ -27,7 +28,8 @@ likelihood_true = np.array([-x[1] for x in opts_cont_true])
 LRT = 2*(likelihood_false - likelihood_true)
 p_vals = scipy.stats.chi2.logsf(LRT,1) #returns the LOG p-values
 ```
-    - Output of this file is made using print statements (sorry, this was my best method for exporting the results). Edit this how you'd like.
+
+
 ```
 print("1k genomes group: " + group)
 print("Ancient Individual: " + individual)
