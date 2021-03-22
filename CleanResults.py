@@ -98,5 +98,5 @@ def cleanResults(fileName):
 #
 #############################
 
-fileName = "CHB_CHS_CDX_JPT.results"
+fileName = "CHB_CHS_CDX_JPT_KHV_CEU.results"
 createCSV(fileName)

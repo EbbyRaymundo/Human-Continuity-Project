@@ -99,6 +99,7 @@ def computeAlleleFreq(genoFile, indFile, snpFile, group):
     freqs = np.zeros(int(lineCount[0])) # one element for each SNP freq (line)
     lineNumber  = 0  # represents which SNP we're on
     snpInfoLine = sFile.readline() # for loop iterates over geno file, iterate over SNP file simultaneously
+    snpLost = 0 # keeps track of how many SNP's had no data for the group
     
     # for each line in file, calculate freq of SNP
     for line in gFile:
@@ -114,6 +115,9 @@ def computeAlleleFreq(genoFile, indFile, snpFile, group):
 
                 freqs[lineNumber] += float(line[index]) # need to cast char to float for numpy array
                 alleleTotal += 2 # we're diploid, two copies of each allele
+
+            else:
+                snpLost += 1
 
         freqs[lineNumber] = 1 - (freqs[lineNumber] / alleleTotal) # calculate derived allele freq step
 
@@ -139,7 +143,7 @@ def computeAlleleFreq(genoFile, indFile, snpFile, group):
     sFile.close() # for good practice
     outFile.close()
 
-    return(freqs, lineNumber, group)
+    return(freqs, lineNumber, group, snpLost)
 
 
 '''
@@ -301,10 +305,13 @@ SNPFile = "v42.4.1240K.EG.snp"
 reads = "AncientReads.output"
 
 #searchTerms = ["ACB", "ASW","BEB", "GBR", "CDX", "CLM", "ESN", "FIN", "GWD", "GIH", "CHB", "CHS", "IBS", "ITU", "JPT", "KHV", "LWK", "MSL", "MXL", "PEL", "PUR", "PJL", "STU", "TSI", "YRI", "CEU"]
-#searchTerms = ["CHB", "CHS", "CDX", "JPT"]
-searchTerms = ["KHV", "CEU"]
+searchTerms = ["CHB", "CHS", "CDX", "JPT", "KHV", "CEU"]
+
+'''
 for group in searchTerms:
-    computeAlleleFreq(GenoFile, IndFile, SNPFile, group)
+     results = computeAlleleFreq(GenoFile, IndFile, SNPFile, group)
+     print(group, results[3])
+'''
 
 ancientIndividuals = ["HRR051935", "HRR051936", "HRR051937",\
                       "HRR051938", "HRR051939", "HRR051940",\
@@ -343,5 +350,14 @@ ancientDict = {"HRR051935":"Yumin",\
 
 # removed HRR051957 and HRR051953 for not having a corresponding name in the ind file
 for group in searchTerms:
-    for individual in ancientIndividuals:
-        appendAncientIndividual(group, [individual], "AncientReads.output", ancientDict, "early_CN.ind")
+    appendAncientIndividual(group, ["HRR051935"], "AncientReads.output", ancientDict, "early_CN.ind") # yumin
+    appendAncientIndividual(group, ["HRR051936"], "AncientReads.output", ancientDict, "early_CN.ind") # bianbian
+    appendAncientIndividual(group, ["HRR051937"], "AncientReads.output", ancientDict, "early_CN.ind") # boshan
+    appendAncientIndividual(group, ["HRR051938", "HRR051939", "HRR051940"], "AncientReads.output", ancientDict, "early_CN.ind") # Xiaojinshan
+    appendAncientIndividual(group, ["HRR051941"], "AncientReads.output", ancientDict, "early_CN.ind") # XIaogao
+    appendAncientIndividual(group, ["HRR051942"], "AncientReads.output", ancientDict, "early_CN.ind") # Qihe
+    appendAncientIndividual(group, ["HRR051943", "HRR051944"], "AncientReads.output", ancientDict, "early_CN.ind") # Liangdao
+    appendAncientIndividual(group, ["HRR051945", "HRR051946"], "AncientReads.output", ancientDict, "early_CN.ind") # Suogang
+    appendAncientIndividual(group, ["HRR051947", "HRR051948", "HRR051949", "HRR051950", "HRR051951", "HRR051952", "HRR051954"], "AncientReads.output", ancientDict, "early_CN.ind") # Xitoucun
+    appendAncientIndividual(group, ["HRR051955", "HRR051956", "HRR051958", "HRR051959"], "AncientReads.output", ancientDict, "early_CN.ind") # Tanshishan
+    appendAncientIndividual(group, ["HRR051960"], "AncientReads.output", ancientDict, "early_CN.ind") # Chuanyun
