@@ -347,8 +347,13 @@ ancientDict = {"HRR051935":"Yumin",\
                "HRR051958":"L5698_d",\
                "HRR051959":"L5696_d",\
                "HRR051960":"L5694"}
-
+'''
 # removed HRR051957 and HRR051953 for not having a corresponding name in the ind file
+for group in searchTerms:
+    for each in ancientIndividuals:
+        appendAncientIndividual(group, [each], reads, ancientDict, "ind/early_CN.ind")
+'''
+
 for group in searchTerms:
     appendAncientIndividual(group, ["HRR051935"], "AncientReads.output", ancientDict, "early_CN.ind") # yumin
     appendAncientIndividual(group, ["HRR051936"], "AncientReads.output", ancientDict, "early_CN.ind") # bianbian
@@ -357,7 +362,7 @@ for group in searchTerms:
     appendAncientIndividual(group, ["HRR051941"], "AncientReads.output", ancientDict, "early_CN.ind") # XIaogao
     appendAncientIndividual(group, ["HRR051942"], "AncientReads.output", ancientDict, "early_CN.ind") # Qihe
     appendAncientIndividual(group, ["HRR051943", "HRR051944"], "AncientReads.output", ancientDict, "early_CN.ind") # Liangdao
-    appendAncientIndividual(group, ["HRR051945", "HRR051946"], "AncientReads.output", ancientDict, "early_CN.ind") # Suogang
-    appendAncientIndividual(group, ["HRR051947", "HRR051948", "HRR051949", "HRR051950", "HRR051951", "HRR051952", "HRR051954"], "AncientReads.output", ancientDict, "early_CN.ind") # Xitoucun
-    appendAncientIndividual(group, ["HRR051955", "HRR051956", "HRR051958", "HRR051959"], "AncientReads.output", ancientDict, "early_CN.ind") # Tanshishan
+    appendAncientIndividual(group, ["HRR051945"], "AncientReads.output", ancientDict, "early_CN.ind") # Suogang
+    appendAncientIndividual(group, ["HRR051947", "HRR051948", "HRR051949", "HRR051950"], "AncientReads.output", ancientDict, "early_CN.ind") # Xitoucun
+    appendAncientIndividual(group, ["HRR051955", "HRR051956", "HRR051958"], "AncientReads.output", ancientDict, "early_CN.ind") # Tanshishan
     appendAncientIndividual(group, ["HRR051960"], "AncientReads.output", ancientDict, "early_CN.ind") # Chuanyun

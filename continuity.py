@@ -3,7 +3,18 @@ import scipy.stats
 import numpy as np
 
 modern_pops = ["CHB", "CHS", "CDX", "JPT", "KHV", "CEU"]
-
+'''
+ancient_Individuals = ["HRR051935", "HRR051936", "HRR051937",\
+                      "HRR051938", "HRR051939", "HRR051940",\
+                      "HRR051941", "HRR051942", "HRR051943",\
+                      "HRR051944", "HRR051945", "HRR051946",\
+                      "HRR051947", "HRR051948", "HRR051949",\
+                      "HRR051950", "HRR051951", "HRR051952",\
+                      "HRR051954", "HRR051955",\
+                      "HRR051956", "HRR051958",\
+                      "HRR051959", "HRR051960"]
+'''
+'''
 ancient_Individuals = ["HRR051935", "HRR051936", "HRR051937",
                         "HRR051938_HRR051939_HRR051940", "HRR051941",
                         "HRR051942", "HRR051943_HRR051944",
@@ -11,7 +22,14 @@ ancient_Individuals = ["HRR051935", "HRR051936", "HRR051937",
                         "HRR051947_HRR051948_HRR051949_HRR051950_HRR051951_HRR051952_HRR051954",
                         "HRR051955_HRR051956_HRR051958_HRR051959",
                         "HRR051960"]
-
+'''
+ancient_Individuals = ["HRR051935", "HRR051936", "HRR051937",
+                        "HRR051938_HRR051939_HRR051940", "HRR051941",
+                        "HRR051942", "HRR051943_HRR051944",
+                        "HRR051945",
+                        "HRR051947_HRR051948_HRR051949_HRR051950",
+                        "HRR051955_HRR051956_HRR051958",
+                        "HRR051960"]
 '''
 modern_pops = ["KHV", "CEU"]
 ancient_Individuals = ["HRR051935"]
