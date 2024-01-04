@@ -1,0 +1,99 @@
+---
+title: "Continuity p values"
+author: "Ebby Raymundo"
+date: "4/2/2021"
+output: pdf_document
+---
+
+# Description
+Generate plots for p-value calculations for tests of continuity.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggrepel)
+library(smodels)
+```
+
+```{r}
+results_ungrouped = read.csv("data/CHB_CHS_CDX_JPT_KHV_CEU_filtered_ungrouped.csv", header = TRUE) # all pairs run together. No grouping by dig site in continuity test
+results_grouped = read.csv("data/CHB_CHS_CDX_JPT_KHV_CEU_filtered reads.csv", header = TRUE) # grouped by dig site, has high and low read counts
+results_uncontaminated_X <- read.csv("data/CHB_CHS_CDX_JPT_KHV_CEU_uncontaminated_X.csv", header = TRUE) # removed reads with contaminated X chrom ppl
+  
+id_grouped = read.csv("data/East_asian_id.csv", header = TRUE)
+id_ungrouped = read.csv("data/East_asian_id_old.csv", header = TRUE)
+id_uncontaminated = read.csv("data/East_asian_id_uncontaminated.csv", header = TRUE)
+```
+
+Adding in ID's so that the individuals are easier to read and more identifiable.
+
+```{r}
+# only left join new results with new id's and old results with old id's
+results_ungrouped <- results_ungrouped %>%
+  left_join(id_ungrouped, by = "individual")
+
+results_grouped <- results_grouped %>%
+  left_join(id_grouped, by = "individual")
+
+results_uncontaminated_X <- results_uncontaminated_X %>%
+  left_join(id_uncontaminated, by = "individual")
+
+```
+
+# plots
+
+## p values displayed are in log10 form. The vertical lines are at p = log10(0.05)
+```{r}
+results_ungrouped %>%
+  mutate(p_capped = ifelse(p < -10, -10, p)) %>%
+  ggplot() +
+    geom_col(aes(name, p_capped, fill = population), position = position_dodge()) +
+    ylim(-10, 0) +
+    geom_hline(yintercept = log10(0.05)) +
+    coord_flip() +
+    theme_classic() +
+    scale_fill_viridis_d() +
+    labs(title = "Continuity P Values Across Thousand Genomes Populations") +
+    ylab("P Value (log10)") +
+    xlab("Ancient Individual ID")
+
+ggsave("figures/ungrouped/P values ungrouped.png", width = 6, height = 4, scale = 1.4)
+```
+
+```{r}
+results_grouped %>%
+  mutate(p_capped = ifelse(p < -10, -10, p)) %>%
+  mutate(p_capped = -p_capped) %>%
+  ggplot() +
+    geom_col(aes(name, p_capped, fill = population)) +
+    ylim(0, 10) +
+    geom_hline(yintercept = -log10(0.05)) +
+    coord_flip() +
+    theme_classic() +
+    scale_fill_viridis_d() +
+    labs(title = "Continuity P-Values Across Thousand Genomes Populations") +
+    ylab("P-Value (-log10)") +
+    xlab("Ancient Individual ID") +
+    facet_wrap(~population)
+
+ggsave("figures/grouped/P values grouped.png", width = 6, height = 4, scale = 1.4)
+```
+
+```{r}
+results_uncontaminated_X %>%
+  mutate(p_capped = ifelse(p < -10, -10, p)) %>%
+  ggplot() +
+    geom_col(aes(name, p_capped, fill = population)) +
+    ylim(-10, 0) +
+    geom_hline(yintercept = log10(0.05)) +
+    coord_flip() +
+    theme_classic() +
+    scale_fill_viridis_d() +
+    labs(title = "Continuity P Values Across Thousand Genomes Populations") +
+    ylab("P Value (log10)") +
+    xlab("Ancient Individual ID") +
+    facet_wrap(~population)
+
+ggsave("figures/uncontaminated/P values uncontaminated.png", width = 6, height = 4, scale = 1.4)
+```
+

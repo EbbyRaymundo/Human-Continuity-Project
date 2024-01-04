@@ -1,0 +1,569 @@
+---
+title: "Human Continuity"
+author: "Ebby Raymundo"
+date: "12/19/2020"
+output: pdf_document
+---
+
+# Description
+Generate the diffusion time unit plots for different conditions such as t1 vs t2, age vs t1, age vs t2, and latitude vs t1/t2.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggrepel)
+library(smodels)
+library(ggpubr)
+library(ggpmisc)
+```
+
+# Data
+Reading in results of continuity tests and demographic data
+
+```{r}
+results_ungrouped = read.csv("data/CHB_CHS_CDX_JPT_KHV_CEU_filtered_ungrouped.csv", header = TRUE) # all pairs run together. No grouping by dig site in continuity test
+results_grouped = read.csv("data/CHB_CHS_CDX_JPT_KHV_CEU_filtered reads.csv", header = TRUE) # grouped by dig site, has high and low read counts
+results_uncontaminated_X <- read.csv("data/CHB_CHS_CDX_JPT_KHV_CEU_uncontaminated_X.csv", header = TRUE) # removed reads with contaminated X chromosome individuals
+  
+id_grouped = read.csv("data/East_asian_id.csv", header = TRUE)
+id_ungrouped = read.csv("data/East_asian_id_old.csv", header = TRUE)
+id_uncontaminated = read.csv("data/East_asian_id_uncontaminated.csv", header = TRUE)
+```
+
+Left-joining demographic data to continuity results for figure generation
+
+```{r}
+# only left join new results with new id's and old results with old id's
+results_ungrouped <- results_ungrouped %>%
+  left_join(id_ungrouped, by = "individual")
+
+results_grouped <- results_grouped %>%
+  left_join(id_grouped, by = "individual")
+
+results_uncontaminated_X <- results_uncontaminated_X %>%
+  left_join(id_uncontaminated, by = "individual")
+
+```
+
+# t1 and t2 plots 
+
+t1 vs t2 plot for every 1K Genomes population (grouped by dig site).
+
+```{r}
+for(each in c("CHB", "CHS", "CDX", "JPT", "KHV", "CEU")) {
+  results_grouped %>%
+    filter(population == each) %>%
+    ggplot() +
+      geom_point(aes(continuity_false_t1, continuity_false_t2, color = name, shape = location), size = 4) +
+      geom_text_repel(aes(continuity_false_t1, continuity_false_t2, label = name), box.padding = 0.5) +
+      scale_color_manual(values = c(
+        Bianbian = "black",
+        Boshan = "cornflowerblue",
+        Chuanyun = "blue",
+        Liangdao = "burlywood3",
+        Qihe = "orange",
+        Suogang = "deeppink",
+        Tanshishan = "gold",
+        Xiaogao = "peachpuff",
+        Xiaojingshan = "gray55",
+        Xitoucun = "plum",
+        Yumin = "tomato3"
+      )) +
+      labs(title = str_interp("${each} Diffusion Time Units From Most Recent Common Ancestor")) +
+      ylab("Ancestral Population t2 (Diffusion Time Units)") +
+      xlab("Modern Population t1 (Diffusion Time Units)") +
+      theme_classic()
+  
+  ggsave(str_interp("figures/grouped/${each} Diffusion Time units grouped.png"), width = 6, height = 4, scale = 1.4)
+}
+```
+
+t1 vs t2 for every 1K Genomes population but ungrouped by dig site.
+
+```{r}
+for(each in c("CHB", "CHS", "CDX", "JPT", "KHV", "CEU")) {
+  results_ungrouped %>%
+    filter(population == each) %>%
+    ggplot() +
+      geom_point(aes(continuity_false_t1, continuity_false_t2, color = name), size = 4) +
+      scale_color_manual(values = c(
+        Bianbian = "black",
+        Boshan = "cornflowerblue",
+        Chuanyun = "blue",
+        Liangdao1 = "burlywood3",
+        Liangdao2 = "green4",
+        Qihe = "orange",
+        Suogang = "deeppink",
+        Tanshishan = "gold",
+        Xiaogao = "peachpuff",
+        Xiaojinshan = "gray55",
+        Xitoucun = "plum",
+        Yumin = "tomato3"
+      )) +
+      labs(title = str_interp("${each} Diffusion Time Units From Most Recent Common Ancestor")) +
+      ylab("Ancestral Population t2 (Diffusion Time Units)") +
+      xlab("Modern Population t1 (Diffusion Time Units)") +
+      theme_classic()
+  
+  ggsave(str_interp("figures/ungrouped/${each} Diffusion time units ungrouped.png"), width = 6, height = 4, scale = 1.4)
+}
+  
+```
+
+Continuity tests with contaminated X chromosome individuals removed. Leaves some individuals with only 1 sample
+
+```{r}
+for(each in c("CHB", "CHS", "CDX", "JPT", "KHV", "CEU")) {
+  results_uncontaminated_X %>%
+    filter(population == each) %>%
+    ggplot() +
+      geom_point(aes(continuity_false_t1, continuity_false_t2, color = name), size = 4) +
+      scale_color_manual(values = c(
+        Bianbian = "black",
+        Boshan = "cornflowerblue",
+        Chuanyun = "blue",
+        Liangdao = "burlywood3",
+        Qihe = "orange",
+        Suogang = "deeppink",
+        Tanshishan = "gold",
+        Xiaogao = "peachpuff",
+        Xiaojinshan = "gray55",
+        Xitoucun = "plum",
+        Yumin = "tomato3"
+      )) +
+      labs(title = str_interp("${each} Diffusion Time Units From Most Recent Common Ancestor")) +
+      ylab("Ancestral Population t2 (Diffusion Time Units)") +
+      xlab("Modern Population t1 (Diffusion Time Units)") +
+      theme_classic()
+  
+  ggsave(str_interp("figures/uncontaminated/${each} Diffusion Time units grouped.png"), width = 6, height = 4, scale = 1.4)
+}
+```
+
+Doing facet wrap w/ labels instead of by pop (not that good, can change plot size. Label overlaps issue)
+
+```{r}
+results_grouped %>%
+  ggplot() +
+    geom_point(aes(continuity_false_t1, continuity_false_t2, color = population), size = 3) +
+    geom_text_repel(aes(continuity_false_t1, continuity_false_t2, label = name), box.padding = 0.5) +
+    xlab("Continuity False t1 (Diffusion Time Units)") +
+    ylab("Continuity False t2 (Diffusion Time Units)") +
+    theme_classic() +
+    scale_color_viridis_d() +
+    facet_wrap(~population)
+
+ggsave("figures/grouped/facet wrap t1 vs t2.png", width = 14, height = 8, scale = 1.4)
+```
+
+t1 vs t2 for each 1K Genomes group by individual plots instead of facet wrap
+
+```{r}
+for(each in c("CHB", "CHS", "CDX", "JPT", "KHV", "CEU")) {
+  results_grouped %>%
+    filter(population == each) %>%
+    ggplot() +
+      geom_point(aes(continuity_false_t1, continuity_false_t2, shape = location), size = 4) +
+      geom_text_repel(aes(continuity_false_t1, continuity_false_t2, label = name), box.padding = 0.5) +
+      labs(title = str_interp("${each} Diffusion Time Units From Most Recent Common Ancestor")) +
+      ylab("Ancestral Population t2 (Diffusion Time Units)") +
+      xlab("Modern Population t1 (Diffusion Time Units)") +
+      theme_classic()
+  
+  ggsave(str_interp("figures/grouped/${each} Diffusion Time units grouped.png"), width = 6, height = 4, scale = 1.4)
+}
+```
+
+
+Using CDX and CEU plots specifically
+
+```{r}
+CDX_t1_t2 <- results_grouped %>%
+  filter(population == "CDX") %>%
+  ggplot() +
+    geom_point(aes(continuity_false_t1, continuity_false_t2, color = name, shape = location), size = 4) +
+    geom_text_repel(aes(continuity_false_t1, continuity_false_t2, label = name), box.padding = 0.5) +
+    scale_color_manual(values = c(
+      Bianbian = "black",
+      Boshan = "cornflowerblue",
+      Chuanyun = "blue",
+      Liangdao = "burlywood3",
+      Qihe = "orange",
+      Suogang = "deeppink",
+      Tanshishan = "gold",
+      Xiaogao = "peachpuff",
+      Xiaojingshan = "gray55",
+      Xitoucun = "plum",
+      Yumin = "tomato3"
+      )) +
+    ylab("Continuity False t2 (Diffusion Time Units)") +
+    xlab("Continuity False t1 (Diffusion Time Units)") +
+    theme_classic() +
+    theme(legend.position = "none")
+
+CEU_t1_t2 <- results_grouped %>%
+  filter(population == "CEU") %>%
+  ggplot() +
+    geom_point(aes(continuity_false_t1, continuity_false_t2, color = name, shape = location), size = 4) +
+    geom_text_repel(aes(continuity_false_t1, continuity_false_t2, label = name), box.padding = 0.5) +
+    scale_color_manual(values = c(
+      Bianbian = "black",
+      Boshan = "cornflowerblue",
+      Chuanyun = "blue",
+      Liangdao = "burlywood3",
+      Qihe = "orange",
+      Suogang = "deeppink",
+      Tanshishan = "gold",
+      Xiaogao = "peachpuff",
+      Xiaojingshan = "gray55",
+      Xitoucun = "plum",
+      Yumin = "tomato3"
+      )) +
+    ylab("Continuity False t2 (Diffusion Time Units)") +
+    xlab("Continuity False t1 (Diffusion Time Units)") +
+    theme_classic()
+
+ggarrange(CDX_t1_t2, CEU_t1_t2,
+          labels = c("A", "B")
+          )
+
+ggsave("figures/grouped/CDX CEU t1 t2.png", width = 10, height = 4, scale = 1.4)
+```
+
+
+# t1 and t2 plots separated
+
+t1
+```{r}
+results_ungrouped_CHB <- results_ungrouped %>%
+  filter(population == "CHB")
+results_ungrouped_CHS <- results_ungrouped %>%
+  filter(population == "CHS")
+results_ungrouped_CDX <- results_ungrouped %>%
+  filter(population == "CDX")
+results_ungrouped_JPT <- results_ungrouped %>%
+  filter(population == "JPT")
+results_ungrouped_KHV <- results_ungrouped %>%
+  filter(population == "KHV")
+results_ungrouped_CEU <- results_ungrouped %>%
+  filter(population == "CEU")
+
+# somewhat ashamed, but manually change out which 1k genome pop here
+
+results_uncontaminated_X %>%
+  filter(population == "CEU") %>%
+  ggplot() +
+    geom_col(aes(name, continuity_false_t1), fill = "gray55") +
+    geom_point(data = results_ungrouped_CEU, aes(name, continuity_false_t1)) +
+    coord_flip() +
+    labs(title = "CEU t1 Diffusion Time Units") +
+    ylab("t1 (Diffusion Time Units)") +
+    xlab("Ancestral Population") +
+    theme_classic()
+  
+ggsave(str_interp("figures/uncontaminated/CEU t1 diffusion time units.png"), width = 6, height = 4, scale = 1.4)
+```
+
+t2
+
+```{r}
+results_uncontaminated_X %>%
+  filter(population == "CEU") %>%
+  ggplot() +
+    geom_col(aes(name, continuity_false_t2), fill = "gray55") +
+    geom_point(data = results_ungrouped_CEU, aes(name, continuity_false_t2)) +
+    coord_flip() +
+    labs(title = "CEU t2 Diffusion Time Units") +
+    ylab("t2 (Diffusion Time Units)") +
+    xlab("Ancestral Population") +
+    theme_classic()
+  
+ggsave(str_interp("figures/uncontaminated/CEU t2 diffusion time units.png"), width = 6, height = 4, scale = 1.4)
+```
+
+```{r}
+CHB_t1 <- results_grouped %>%
+  filter(population == "CHB") %>%
+  ggplot() +
+    geom_col(aes(name, continuity_false_t1), fill = "gray55") +
+    geom_point(data = results_ungrouped_CHB, aes(name, continuity_false_t1)) +
+    coord_flip() +
+    ylab("Continuity False t1 (Diffusion Time Units)") +
+    xlab("Ancient East Asian") +
+    theme_classic()
+
+CHB_t2 <- results_grouped %>%
+  filter(population == "CHB") %>%
+  ggplot() +
+    geom_col(aes(name, continuity_false_t2), fill = "gray55") +
+    geom_point(data = results_ungrouped_CHB, aes(name, continuity_false_t2)) +
+    coord_flip() +
+    ylab("Continuity False t2 (Diffusion Time Units)") +
+    xlab("Ancient East Asian") +
+    theme_classic()
+
+ggarrange(CHB_t1, CHB_t2,
+          labels = c("A", "B")
+          )
+
+ggsave("figures/CHB dtu.png", width = 10, height = 4, scale = 1.4)
+```
+
+
+# Age vs t1 and t2
+```{r}
+results_grouped %>%
+  filter(population == "CHB") %>%
+  lm(continuity_false_t1 ~ age, data = .) %>%
+  summary()
+# CEU: -5.002e-07x + 5.301e-02, r2 = 0.1347
+# CHB: 9.435e-07x + 9.365e-03, r2 = 0.145
+```
+
+age vs t1 for everyone
+```{r}
+results_grouped %>%
+  ggplot() +
+    geom_point(aes(age, continuity_false_t1, color = population), size = 3) +
+    geom_abline(intercept = 5.301e-02, slope = -5.002e-07) +
+    labs(title = "Sample Age Versus t1 Value") +
+    xlab("Sample Age (Years B.P.)") +
+    ylab("Continuity False t1 (Diffusion Time Units)") +
+    theme_classic() +
+    scale_color_viridis_d()
+
+ggsave("figures/grouped/age versus t1.png", width = 6, height = 4, scale = 1.4)
+```
+
+```{r}
+results_grouped %>%
+  ggplot() +
+    geom_point(aes(age, continuity_false_t2, color = population), size = 3) +
+    labs(title = "Sample Age Versus t2 Value") +
+    theme_classic() + scale_color_viridis_d()
+
+ggsave("figures/grouped/age versus t2.png", width = 6, height = 4, scale = 1.4)
+```
+
+CHB vs CEU, age vs t1
+
+```{r}
+results_grouped %>%
+  filter(population == "CHB" | population == "CEU") %>%
+  ggplot() +
+    geom_point(aes(age, continuity_false_t1, color = population), size = 3) +
+    geom_text_repel(aes(age, continuity_false_t1, label = name), box.padding = 0.6) +
+    geom_abline(intercept = 5.301e-02, slope = -5.002e-07) +
+    geom_abline(intercept = 9.365e-03, slope = 9.435e-07) +
+    scale_color_manual(values = c(
+      CHB = "blue",
+      CEU = "black"
+    )
+    ) +
+    labs(title = "Sample Age Versus t1 Value") +
+    xlab("Sample Age (Years B.P.)") +
+    ylab("Continuity False t1 (Diffusion Time Units)") +
+    theme_classic()
+# CEU: -5.002e-07x + 5.301e-02, r2 = 0.1347
+# CHB: 9.435e-07x + 9.365e-03, r2 = 0.145
+
+ggsave("figures/grouped/CHB CEU age versus t1.png", width = 6, height = 4, scale = 1.4)
+```
+
+
+
+# SNPs vs t1/t2
+
+```{r}
+results_ungrouped %>%
+  ggplot() +
+    geom_point(aes(SNPs, continuity_false_t1, color = population), size = 3) +
+    labs(title = "Ungrouped Number of SNPs Versus t1 Value") +
+    xlab("Number of Available SNPs") +
+    ylab("Continuity False t1") +
+    theme_classic() +
+    scale_color_viridis_d()
+
+ggsave("figures/ungrouped/snp versus t1.png", width = 6, height = 4, scale = 1.4)
+```
+
+```{r}
+results_ungrouped %>%
+  ggplot() +
+    geom_point(aes(SNPs, continuity_false_t2, color = population), size = 3) +
+    labs(title = "Ungrouped Number of SNPs Versus t2 Value") +
+    theme_classic() +
+    scale_color_viridis_d()
+
+ggsave("figures/ungrouped/snp versus t2.png", width = 6, height = 4, scale = 1.4)
+```
+
+```{r}
+results_grouped %>%
+  filter(population == "CHB") %>%
+  lm(continuity_false_t1 ~ SNPs, data = .) %>%
+  summary()
+
+# t1 CHB r squared = 0.03563
+# t1 CEU r squared = 0.2719
+
+# t2 CHB r squared = 0.4143
+# t2 CEU r squared = 0.1794
+```
+
+
+
+```{r}
+results_grouped %>%
+  filter(population == "CHB" | population == "CEU") %>%
+  ggplot() +
+    geom_point(aes(SNPs, continuity_false_t1, color = population), size = 3) +
+    geom_abline(intercept = 5.319e-02, slope = -4.704e-09) +
+    geom_abline(intercept = 1.338e-02, slope = 3.096e-09) +
+    geom_text_repel(aes(SNPs, continuity_false_t1, label = name)) +
+    labs(title = "Number of SNPs Versus t1 Value") +
+    scale_color_manual(values = c(
+      CHB = "blue",
+      CEU = "black"
+    )
+    ) +
+    xlab("Number of Available SNPs") +
+    ylab("Continuity False t1") +
+    theme_classic()
+
+ggsave("figures/grouped/snp versus t2.png", width = 6, height = 4, scale = 1.4)
+```
+
+```{r}
+results_grouped %>%
+  filter(population == "CHB" | population == "CEU") %>%
+  ggplot() +
+    geom_point(aes(SNPs, continuity_false_t2, color = population), size = 3) +
+    geom_abline(intercept = 3.679e-01, slope = -2.900e-07) +
+    geom_abline(intercept = 8.996e-01, slope = -5.129e-07) +
+    labs(title = "Number of SNPs Versus t2 Value") +
+    scale_color_manual(values = c(
+      CHB = "blue",
+      CEU = "black"
+    )
+    ) +
+    xlab("Number of Available SNPs") +
+    ylab("Continuity False t2") +
+    theme_classic()
+
+ggsave("figures/grouped/snp versus t2.png", width = 6, height = 4, scale = 1.4)
+```
+
+
+Combines ungrouped SNPs versus t1 and grouped SNPs versus t1 for CHB, CEU into 1 figure
+```{r}
+ungrouped_snp_t1 <- results_ungrouped %>%
+  ggplot() +
+    geom_point(aes(SNPs, continuity_false_t1, color = population), size = 3) +
+    xlab("Number of Available SNPs") +
+    ylab("Continuity False t1 (Diffusion Time Units)") +
+    theme_classic() +
+    scale_color_viridis_d()
+
+grouped_SNP_t1_CHB_CEU <- results_grouped %>%
+  filter(population == "CHB" | population == "CEU") %>%
+  ggplot() +
+    geom_point(aes(SNPs, continuity_false_t1, color = population), size = 3) +
+    geom_abline(intercept = 5.319e-02, slope = -4.704e-09) +
+    geom_abline(intercept = 1.338e-02, slope = 3.096e-09) +
+    geom_text_repel(aes(SNPs, continuity_false_t1, label = name)) +
+    scale_color_manual(values = c(
+      CHB = "blue",
+      CEU = "black"
+    )
+    ) +
+    xlab("Number of Available SNPs") +
+    ylab("Continuity False t1 (Diffusion Time Units)") +
+    theme_classic()
+# y = -4.704e-09x + 5.319e-02 CEU
+# y = 3.096e-09x + 1.338e-02 CHB
+
+
+grouped_SNP_t2_CHB_CEU<- results_grouped %>%
+  filter(population == "CHB" | population == "CEU") %>%
+  ggplot() +
+    geom_point(aes(SNPs, continuity_false_t2, color = population), size = 3) +
+    geom_abline(intercept = 3.679e-01, slope = -2.900e-07) +
+    geom_abline(intercept = 8.996e-01, slope = -5.129e-07) +
+    geom_text_repel(aes(SNPs, continuity_false_t2, label = name)) +
+    scale_color_manual(values = c(
+      CHB = "blue",
+      CEU = "black"
+    )
+    ) +
+    xlab("Number of Available SNPs") +
+    ylab("Continuity False t2") +
+    theme_classic()
+# y = -2.900e-07x + 3.679e-01
+# y = -5.129e-07x + 8.996e-01
+
+# ggpubr is so broken
+
+ggarrange(grouped_SNP_t1_CHB_CEU, grouped_SNP_t2_CHB_CEU, ungrouped_snp_t1,
+          labels = c("A", "B", "C"),
+          nrow = 2,
+          ncol = 2)
+ggsave("figures/snp versus dtu combined.png", width = 12, height = 8, scale = 1.4)
+```
+
+Latitude vs t1/t2
+
+```{r}
+grouped_lat_t1 <- results_grouped %>%
+  ggplot() +
+    geom_point(aes(lat, continuity_false_t1, color = population), size = 3) +
+    geom_text_repel(aes(lat, continuity_false_t1, label = name)) +
+    xlab("Latitude") +
+    ylab("Continuity False t1 (Diffusion Time Units)") +
+    theme_classic() +
+    scale_color_viridis_d() +
+    facet_wrap(~population)
+
+grouped_lat_t2 <- results_grouped %>%
+  ggplot() +
+    geom_point(aes(lat, continuity_false_t2, color = population), size = 3) +
+    xlab("Latitude") +
+    ylab("Continuity False t2 (Diffusion Time Units)") +
+    theme_classic() +
+    scale_color_viridis_d()
+
+ggarrange(grouped_lat_t1, grouped_lat_t2, labels = c("A", "B"))
+ggsave("figures/grouped/latitude dtu.png", width = 12, height = 4, scale = 1.4)
+```
+t1 alone
+
+```{r}
+results_grouped %>%
+  ggplot() +
+    geom_point(aes(lat, continuity_false_t1, color = population), size = 3) +
+    geom_text_repel(aes(lat, continuity_false_t1, label = name), box.padding = 0.5) +
+    xlab("Latitude") +
+    ylab("Continuity False t1 (Diffusion Time Units)") +
+    theme_classic() +
+    scale_color_viridis_d() +
+    facet_wrap(~population)
+
+ggsave("figures/grouped/latitude t1.png", width = 10, height = 5, scale = 1.4)
+```
+
+t2 alone
+
+```{r}
+results_grouped %>%
+  ggplot() +
+    geom_point(aes(lat, continuity_false_t2, color = population), size = 3) +
+    geom_text_repel(aes(lat, continuity_false_t2, label = name), box.padding = 0.5) +
+    xlab("Latitude") +
+    ylab("Continuity False t2 (Diffusion Time Units)") +
+    theme_classic() +
+    scale_color_viridis_d() +
+    facet_wrap(~population)
+
+ggsave("figures/grouped/latitude t2.png", width = 12, height = 6, scale = 1.4)
+```
+

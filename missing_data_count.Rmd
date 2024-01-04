@@ -1,0 +1,38 @@
+---
+title: "ancient reads data"
+author: "Ebby Raymundo"
+date: "3/30/2021"
+output: pdf_document
+---
+# Description
+This file is used as a rough indicator of missing data for each ancient individual in the "derived", "ancient", and "other" categories. A bar plot is made for each of the 3 categories for each individual.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(smodels)
+```
+
+```{r}
+ancient_reads <- read_tsv("AncientReads.output", col_names = TRUE)
+small_reads <- ancient_reads[1:20,]
+
+ancient_reads_counts <- small_reads %>%
+  pivot_longer(ends_with(), names_to = c("der", "anc", "other")) %>%
+  filter(value == 0) %>%
+  group_by(ancient_individual) %>%
+  summarize(sm_count())
+```
+
+# Plotting number of missing reads
+
+```{r}
+ancient_reads_counts %>%
+  filter(!str_detect(ancient_individual, "_other")) %>%
+  ggplot() +
+    geom_col(aes(ancient_individual, count)) +
+    coord_flip()
+
+ggsave("figures/missing reads.png", width = 6, height = 4, scale = 1.4)
+```
+
